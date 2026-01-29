@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Interview Log",
+  "type": "object",
+  "required": ["team_name", "session_id", "meta", "turns", "final_feedback"],
+  "properties": {
+    "team_name": { "type": "string" },
+    "session_id": { "type": "string" },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "position": { "type": "string" },
+        "grade": { "type": "string" },
+        "experience": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "turns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "turn_id",
+          "timestamp",
+          "agent_visible_message",
+          "user_message",
+          "internal_thoughts",
+          "interviewer_action",
+          "scores"
+        ],
+        "properties": {
+          "turn_id": { "type": "integer" },
+          "timestamp": { "type": "string" },
+          "agent_visible_message": { "type": "string" },
+          "user_message": { "type": "string" },
+          "internal_thoughts": { "type": "string" },
+          "interviewer_action": { "type": "string" },
+          "scores": { "type": "object" }
+        }
+      }
+    },
+    "final_feedback": {
+      "type": "object",
+      "required": ["verdict", "technical_review", "soft_skills", "personal_roadmap"],
+      "properties": {
+        "verdict": {
+          "type": "object",
+          "required": ["grade", "recommendation", "confidence_score"],
+          "properties": {
+            "grade": { "type": "string" },
+            "recommendation": { "type": "string" },
+            "confidence_score": { "type": "integer" }
+          }
+        },
+        "technical_review": {
+          "type": "object",
+          "required": ["topics", "confirmed_skills", "knowledge_gaps"],
+          "properties": {
+            "topics": { "type": "array" },
+            "confirmed_skills": { "type": "array" },
+            "knowledge_gaps": { "type": "array" }
+          }
+        },
+        "soft_skills": { "type": "object" },
+        "personal_roadmap": { "type": "array" }
+      }
+    }
+  }
+}

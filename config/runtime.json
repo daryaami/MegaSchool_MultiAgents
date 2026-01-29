@@ -1,0 +1,78 @@
+{
+  "interviewer": {
+    "initial_question_template": "Привет! Начнём. Расскажите о вашем опыте работы {position}.",
+    "system_prompt": "Ты интервьюер. Задавай один технический вопрос за раз, следуй рекомендациям Observer и не повторяй уже заданные вопросы.",
+    "question_prompt_template": "Контекст (последние ответы кандидата):\n{history}\n\nУже заданные вопросы:\n{asked_questions}\n\nРекомендация Observer:\n- Сложность: {action} (increase/same/decrease)\n- Тема для вопроса: {topic}\n\nВАЖНО: Observer рекомендует задать вопрос по теме '{topic}'. Используй эту тему при генерации вопроса.\n\nСгенерируй следующий вопрос интервью для позиции {position} уровня {grade}.\n\nВерни СТРОГО JSON без markdown и пояснений:\n{{\"reasoning\":\"твои внутренние рассуждения о том, какой вопрос ты хочешь задать и почему (1-2 предложения) - НЕ показываются кандидату\",\"question\":\"вопрос для кандидата (1-2 предложения)\"}}",
+    "role_reversal_prompt_template": "Кандидат задал вопрос: \"{user_question}\". Дай краткий ответ (1-2 предложения) и мягко вернись к интервью.",
+    "use_internal_reasoning": true,
+    "use_llm_questions": true,
+    "max_question_retries": 2,
+    "repeat_avoidance_note": "Не повторяй ранее заданные вопросы.",
+    "llm_timeout_seconds": 60,
+    "max_history_turns": 4,
+    "base_questions": [
+      "Расскажите о вашем опыте.",
+      "Объясните, как работают транзакции в SQL.",
+      "В чём разница между списком и кортежем в Python?",
+      "Как вы обрабатываете ошибки в Python?"
+    ],
+    "topic_map": [
+      { "name": "SQL Transactions", "keywords": ["transaction", "транзакц"] },
+      { "name": "Python Data Structures", "keywords": ["tuple", "list", "кортеж", "список"] },
+      { "name": "Error Handling", "keywords": ["error", "exception", "ошиб"] }
+    ],
+    "default_topic": "General",
+    "observer_pending_message": "[Observer]: анализирую ответ кандидата...",
+    "observer_timeout_thoughts": "[Observer]: timeout",
+    "observer_timeout_seconds": 60
+  },
+  "observer": {
+    "analysis_system_prompt": "Ты внутренний наблюдатель. Анализируй ответы кандидата на технические вопросы. Твоя задача: 1) Оценить ответ (correctness, confidence). 2) Предложить тему для следующего вопроса (suggested_topic) на основе пробелов в знаниях или необходимости углубиться. 3) Различать: признание незнания (\"не знаю\") - НЕ stop_intent, явное намерение завершить (\"стоп\") - stop_intent=true. Верни только JSON без Markdown и пояснений.",
+    "analysis_json_prompt_template": "Проанализируй ответ кандидата.\nВерни СТРОГО JSON без каких-либо пояснений, префиксов или markdown.\n\nВАЖНО про stop_intent:\n- stop_intent=true ТОЛЬКО если кандидат ЯВНО хочет завершить интервью (\"стоп\", \"закончим\", \"давай фидбэк\", \"хватит\", \"завершим\")\n- stop_intent=false если кандидат просто признаёт незнание (\"не знаю\", \"не умею\", \"не помню\", \"не изучал\") - это НОРМАЛЬНЫЙ ответ на интервью\n- stop_intent=false если кандидат даёт любой технический ответ, даже слабый\n\nВАЖНО про suggested_topic:\n- Если видишь пробелы в знаниях или нужно углубиться в тему - предложи конкретную тему (например: 'SQL Transactions', 'Django ORM', 'Python Data Structures', 'Error Handling', 'API Design')\n- Если ответ хороший и нужно усложнить - предложи более продвинутую тему\n- Если ответ слабый - предложи более базовую тему или ту же тему для уточнения\n- Если всё хорошо - можешь оставить пустую строку\n\nФормат:\n{{\"action\":\"increase|same|decrease\",\"scores\":{{\"correctness\":0.0-1.0,\"confidence\":0.0-1.0}},\"notes\":\"кратко\",\"status\":\"confirmed|gap\",\"correct_answer\":\"если есть пробел, дай корректный краткий ответ\",\"hallucination\":true|false,\"hallucination_reason\":\"кратко\",\"off_topic\":true|false,\"off_topic_reason\":\"кратко\",\"stop_intent\":true|false,\"stop_intent_reason\":\"кратко\",\"suggested_topic\":\"конкретная тема для следующего вопроса или пустая строка\"}}\n\nВопрос: {question}\nОтвет: {answer}",
+    "analysis_fallback_note": "LLM-анализ недоступен, использую эвристику. Причина: {error}",
+    "internal_notes": {
+      "hallucination": "Обнаружено подозрение на галлюцинацию: {reason}",
+      "off_topic": "Ответ не по теме; вернуть к интервью."
+    },
+    "internal_thoughts_prefix": "[Observer]: ",
+    "default_topic": "General",
+    "llm_timeout_seconds": 60,
+    "llm_max_retries": 2,
+    "llm_timeout_note": "LLM timeout; using heuristic-only assessment.",
+    "llm_error_note": "LLM error; using heuristic-only assessment. Details: {error}",
+    "observer_error_note": "Observer error; using fallback response.",
+    "llm_cooldown_seconds": 30,
+    "llm_cooldown_note": "LLM временно отключён из-за ошибок/квоты."
+  },
+  "manager": {
+    "system_prompt": "Ты менеджер по найму. Твоя задача — проанализировать все данные интервью и принять решение о найме. Ты должен оценить:\n1. Технические навыки (confirmed skills vs knowledge gaps)\n2. Наличие галлюцинаций (hallucination_suspect)\n3. Соответствие заявленному грейду\n4. Soft skills (честность, ясность ответов, вовлечённость)\n\nПравила принятия решения:\n- Strong Hire: много confirmed skills, нет/мало gaps, нет галлюцинаций, соответствует или превышает грейд\n- Hire: достаточно confirmed skills, есть небольшие gaps, но кандидат честен, соответствует грейду\n- No Hire: много gaps, есть галлюцинации, не соответствует грейду, или недостаточно навыков\n\nВерни строгий JSON отчёт без markdown и пояснений.",
+    "report_prompt_template": "Проанализируй интервью и прими решение о найме.\n\nВводные:\n- Позиция: {position}\n- Заявленный грейд: {grade}\n- Опыт: {experience}\n\nСтатистика:\n{stats}\n\nНаблюдения Observer по темам:\n{observations}\n\nИстория диалога (вопросы и ответы):\n{turns}\n\nТвоя задача:\n1. Проанализируй статистику (confirmed vs gaps vs hallucinations)\n2. Оцени средние correctness и confidence\n3. Проверь наличие галлюцинаций (hallucination_suspect)\n4. Оцени соответствие грейду на основе ответов\n5. Прими решение: Hire / No Hire / Strong Hire\n6. Оцени confidence_score (0-100) на основе количества данных и их качества\n\nВерни СТРОГО JSON без markdown, префиксов и пояснений:\n{{\"verdict\":{{\"grade\":\"Junior|Middle|Senior\",\"recommendation\":\"Hire|No Hire|Strong Hire\",\"confidence_score\":0-100}},\"technical_review\":{{\"topics\":[{{\"topic\":\"...\",\"status\":\"confirmed|gap|hallucination_suspect\",\"notes\":\"...\",\"correct_answer\":\"...\"}}],\"confirmed_skills\":[\"...\"],\"knowledge_gaps\":[\"...\"]}},\"soft_skills\":{{\"clarity\":\"Good|Average|Poor\",\"honesty\":\"Clear answers|Admitted gaps|Unclear\",\"engagement\":\"High|Neutral|Low\"}},\"personal_roadmap\":[{{\"topic\":\"...\",\"resources\":[\"...\"]}}]}}\n",
+    "max_turns": 12,
+    "llm_timeout_seconds": 60
+  },
+  "policy": {
+    "role_reversal_reply": "Коротко отвечу: это хороший вопрос. Давайте обсудим детали после интервью. А сейчас вернёмся к теме.",
+    "action_reasons": {
+      "increase": "Сильный ответ, повышаем сложность.",
+      "decrease": "Слабый ответ, снижаем сложность или даём подсказку.",
+      "same": "Оставляем сложность."
+    }
+  },
+  "final_feedback": {
+    "recommendation": {
+      "no_gaps": "Hire",
+      "has_gaps": "No Hire"
+    },
+    "confidence": {
+      "no_gaps": 70,
+      "has_gaps": 40
+    },
+    "soft_skills": {
+      "clarity": "Average",
+      "honesty_no_gaps": "Clear answers",
+      "honesty_with_gaps": "Admitted gaps",
+      "engagement": "Neutral"
+    },
+    "roadmap_resources_default": ["https://docs.python.org/3/"]
+  }
+}
