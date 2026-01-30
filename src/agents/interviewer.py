@@ -101,7 +101,7 @@ class Interviewer(Agent):
                 await self._emit_visible(transition, record_history=False)
                 
                 current_topic = self._current_topic if self._current_topic else self.config["default_topic"]
-                question_result = await self._next_question("same", current_topic, {}, previous_question=last_question)
+                question_result = await self._next_question("same", current_topic, {}, previous_question=last_question, correct_answer="")
                 
                 interviewer_thoughts_for_log = ""
                 if isinstance(question_result, dict):
@@ -154,7 +154,8 @@ class Interviewer(Agent):
                         suggested_topic = default_topic
                     self._current_topic = suggested_topic
                     self._specific_topic_count = 0
-                question_result = await self._next_question(obs_result.get("action", "same"), suggested_topic, obs_result.get("scores", {}))
+                correct_answer = obs_result.get("correct_answer", "")
+                question_result = await self._next_question(obs_result.get("action", "same"), suggested_topic, obs_result.get("scores", {}), previous_question="", correct_answer=correct_answer)
                 
                 interviewer_thoughts_for_log = ""
                 if isinstance(question_result, dict):
@@ -218,7 +219,8 @@ class Interviewer(Agent):
             self._current_topic = suggested_topic
             self._specific_topic_count = 0
         
-        question_result = await self._next_question(obs_result["action"], suggested_topic, obs_result.get("scores", {}))
+        correct_answer = obs_result.get("correct_answer", "")
+        question_result = await self._next_question(obs_result["action"], suggested_topic, obs_result.get("scores", {}), previous_question="", correct_answer=correct_answer)
         interviewer_thoughts = ""
         comment = ""
         if isinstance(question_result, dict):
@@ -309,7 +311,7 @@ class Interviewer(Agent):
             }
         )
 
-    async def _next_question(self, action: str, suggested_topic: str = "", scores: Dict[str, Any] = None, previous_question: str = "") -> Union[str, Dict[str, str]]:
+    async def _next_question(self, action: str, suggested_topic: str = "", scores: Dict[str, Any] = None, previous_question: str = "", correct_answer: str = "") -> Union[str, Dict[str, str]]:
         """Возвращает либо строку (вопрос), либо словарь с 'question', 'reasoning' и 'comment'.
         
         Args:
@@ -317,8 +319,9 @@ class Interviewer(Agent):
             suggested_topic: Предложенная тема
             scores: Оценки ответа кандидата
             previous_question: Предыдущий вопрос (для случая role_reversal, чтобы вернуться к той же теме)
+            correct_answer: Правильный ответ от Observer (для исправления ошибок кандидата)
         """
-        result = await self._generate_question(action, suggested_topic, scores or {}, previous_question)
+        result = await self._generate_question(action, suggested_topic, scores or {}, previous_question, correct_answer)
         return result
 
     def _pick_question(self) -> str:
@@ -354,7 +357,7 @@ class Interviewer(Agent):
                 return True
         return False
 
-    async def _generate_question(self, action: str, suggested_topic: str = "", scores: Dict[str, Any] = None, previous_question: str = "") -> Union[str, Dict[str, str]]:
+    async def _generate_question(self, action: str, suggested_topic: str = "", scores: Dict[str, Any] = None, previous_question: str = "", correct_answer: str = "") -> Union[str, Dict[str, str]]:
         """Генерирует вопрос, комментарий и внутренние рассуждения. Возвращает dict с 'question', 'reasoning' и 'comment' или строку (fallback).
         
         Args:
@@ -362,6 +365,7 @@ class Interviewer(Agent):
             suggested_topic: Предложенная тема
             scores: Оценки ответа кандидата
             previous_question: Предыдущий вопрос (для случая role_reversal, чтобы вернуться к той же теме)
+            correct_answer: Правильный ответ от Observer (для исправления ошибок кандидата)
         """
         if not self.config.get("use_llm_questions", True):
             return self._pick_question()
@@ -379,6 +383,10 @@ class Interviewer(Agent):
             confidence = scores.get("confidence", 0.0)
             scores_info = f"\n\nОценка последнего ответа кандидата:\n- Правильность: {correctness:.2f} (0.0-1.0)\n- Уверенность: {confidence:.2f} (0.0-1.0)\n- Действие: {action}"
         
+        correct_answer_info = ""
+        if correct_answer and scores and scores.get("correctness", 1.0) < 0.4:
+            correct_answer_info = f"\n\nВАЖНО: Кандидат дал неправильный ответ. Observer предоставил правильный ответ для исправления:\n{correct_answer}\n\nИспользуй эту информацию, чтобы исправить кандидата в комментарии перед следующим вопросом. Вежливо укажи на ошибку и объясни правильный ответ."
+        
         previous_question_info = ""
         if previous_question:
             previous_question_info = f"\n\nВАЖНО: Кандидат задал вопрос интервьюеру, и мы ответили на него. Теперь нужно вернуться к исходному вопросу, который был задан ранее:\n\"{previous_question}\"\n\nСгенерируй новый вопрос, который будет на ту же тему и с тем же смыслом, что и исходный вопрос выше, но сформулируй его по-другому (не повторяй дословно)."
@@ -394,6 +402,8 @@ class Interviewer(Agent):
                 experience=self.session.meta.get("experience", "N/A"),
                 scores_info=scores_info,
             )
+            if correct_answer_info:
+                prompt = f"{prompt}{correct_answer_info}"
             if previous_question_info:
                 prompt = f"{prompt}{previous_question_info}"
             if attempt > 0 and avoid_note:
