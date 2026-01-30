@@ -10,7 +10,9 @@ from src.agents.observer import Observer
 from src.config import load_config
 from src.llm import get_llm_client
 from src.policy import Policy
+from src.rag import RAGRetriever
 from src.session import SessionLogger
+from src.session_id_manager import get_session_id_string
 
 
 def _print_final_report(feedback: Dict[str, Any], colors: Dict[str, str]) -> None:
@@ -49,12 +51,12 @@ def _print_final_report(feedback: Dict[str, Any], colors: Dict[str, str]) -> Non
     topics = technical.get("topics", [])
     
     if confirmed:
-        print(f"  {colors['interviewer']}✅ Подтверждённые навыки:{colors['reset']}")
+        print(f"  {colors['interviewer']}Подтверждённые навыки:{colors['reset']}")
         for skill in confirmed:
             print(f"    • {skill}")
     
     if gaps:
-        print(f"  {colors['interviewer']}❌ Пробелы в знаниях:{colors['reset']}")
+        print(f"  {colors['interviewer']}Пробелы в знаниях:{colors['reset']}")
         for gap in gaps:
             print(f"    • {gap}")
     
@@ -97,11 +99,17 @@ def _print_final_report(feedback: Dict[str, Any], colors: Dict[str, str]) -> Non
 async def run_interview(meta: Dict[str, str], team_name: str, config_path: str) -> None:
     runtime_config = load_config(config_path)
     policy = Policy(runtime_config["policy"])
+    
+    # Получаем инкрементируемый session_id
+    logs_dir = Path("logs")
+    session_id = get_session_id_string(logs_dir=logs_dir)
+    
     session = SessionLogger(
         team_name=team_name,
         meta=meta,
         feedback_config=runtime_config["final_feedback"],
         default_topic=runtime_config["interviewer"]["default_topic"],
+        session_id=session_id,
     )
     interviewer_in: asyncio.Queue = asyncio.Queue()
     observer_in: asyncio.Queue = asyncio.Queue()
@@ -109,6 +117,24 @@ async def run_interview(meta: Dict[str, str], team_name: str, config_path: str) 
     user_out: asyncio.Queue = asyncio.Queue()
 
     llm = get_llm_client()
+    
+    # Инициализируем RAG, если включен в конфигурации
+    rag = None
+    observer_config = runtime_config.get("observer", {})
+    rag_config = observer_config.get("rag", {})
+    if rag_config.get("enabled", False):
+        try:
+            rag = RAGRetriever(
+                model_name=rag_config.get("model_name", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"),
+                index_path=rag_config.get("index_path"),
+                data_path=rag_config.get("data_path"),
+                base_dir=rag_config.get("base_dir"),
+            )
+        except Exception as e:
+            print(f"Предупреждение: Не удалось инициализировать RAG: {e}")
+            print("Продолжаем работу без RAG.")
+            rag = None
+    
     interviewer = Interviewer(
         interviewer_in,
         user_out,
@@ -123,6 +149,7 @@ async def run_interview(meta: Dict[str, str], team_name: str, config_path: str) 
         llm,
         policy,
         runtime_config["observer"],
+        rag=rag,
     )
     manager = Manager(
         manager_in,
@@ -183,9 +210,10 @@ async def run_interview(meta: Dict[str, str], team_name: str, config_path: str) 
     logs_dir = Path("logs")
     logs_dir.mkdir(exist_ok=True)
     
-    # Сохраняем лог в папку logs
-    log_path = logs_dir / "interview_log.json"
+    # Сохраняем лог в папку logs с session_id в имени файла
+    log_path = logs_dir / f"interview_log_{session_id}.json"
     session.save(str(log_path))
+    print(f"Лог сохранен: {log_path}")
     await interviewer_in.put(None)
     await observer_in.put(None)
     await manager_in.put(None)

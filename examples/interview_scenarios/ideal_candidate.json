@@ -1,0 +1,65 @@
+{
+  "scenario_name": "ideal_candidate",
+  "description": "Идеальный кандидат с высокими оценками и детальными ответами",
+  "meta": {
+    "position": "Backend Developer",
+    "grade": "Middle",
+    "experience": "3 года опыта с Python, Django, Flask"
+  },
+  "expected_behavior": {
+    "observer_actions": ["increase", "increase"],
+    "average_correctness": "> 0.7",
+    "average_confidence": "> 0.7",
+    "final_recommendation": "Strong Hire",
+    "knowledge_gaps": "minimal or none",
+    "hallucinations": false
+  },
+  "interview_turns": [
+    {
+      "question": "Расскажите о вашем опыте работы с Python.",
+      "answer": "Я работаю с Python уже 3 года. Использую его для backend разработки на Django и Flask. Например, недавно создал REST API с использованием Django REST Framework, который обрабатывает более 1000 запросов в минуту.",
+      "expected_scores": {
+        "correctness": 0.9,
+        "confidence": 0.85
+      },
+      "expected_action": "increase",
+      "expected_status": "confirmed"
+    },
+    {
+      "question": "В чем разница между list и tuple в Python?",
+      "answer": "List - это изменяемая последовательность, а tuple - неизменяемая. Например, list можно модифицировать через append(), remove(), а tuple нельзя. Tuple используется для хранения неизменяемых данных, например координат точки (x, y). Также tuple быстрее и занимает меньше памяти.",
+      "expected_scores": {
+        "correctness": 0.95,
+        "confidence": 0.9
+      },
+      "expected_action": "increase",
+      "expected_status": "confirmed"
+    },
+    {
+      "question": "Как вы обрабатываете ошибки в коде?",
+      "answer": "Я использую try-except блоки для обработки исключений. Также логирую ошибки с помощью logging модуля и использую кастомные исключения для более понятной обработки. Например, для валидации данных создаю ValidationError.",
+      "expected_scores": {
+        "correctness": 0.9,
+        "confidence": 0.85
+      },
+      "expected_action": "increase",
+      "expected_status": "confirmed"
+    }
+  ],
+  "expected_final_feedback": {
+    "verdict": {
+      "grade": "Middle",
+      "recommendation": "Strong Hire",
+      "confidence_score": "> 80"
+    },
+    "technical_review": {
+      "confirmed_skills": ["Python", "Django", "Error Handling", "Python Data Structures"],
+      "knowledge_gaps": []
+    },
+    "soft_skills": {
+      "clarity": "Good",
+      "honesty": "Clear answers",
+      "engagement": "High"
+    }
+  }
+}

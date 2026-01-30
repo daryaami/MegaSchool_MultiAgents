@@ -5,13 +5,12 @@ class Policy:
     def __init__(self, config: Dict[str, object]) -> None:
         self._config = config
 
-    def detect_role_reversal(self, text: str) -> bool:
-        return "?" in text
-
     def role_reversal_reply(self) -> str:
+        """Возвращает стандартный ответ при role reversal (fallback)."""
         return self._config["role_reversal_reply"]
 
     def action_from_score(self, correctness: float, confidence: float) -> Tuple[str, str]:
+        """Определяет action на основе эвристик (fallback когда LLM недоступен)."""
         reasons = self._config["action_reasons"]
         if correctness > 0.8 and confidence > 0.7:
             return "increase", reasons["increase"]

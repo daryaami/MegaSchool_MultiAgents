@@ -4,6 +4,7 @@ from typing import Any, Dict
 
 from src.llm import LLMClient
 from src.session import SessionLogger
+from src.schemas import FinalReport
 
 from .base import Agent
 
@@ -25,8 +26,12 @@ class Manager(Agent):
         if msg.get("type") != "finalize":
             return
         reply_queue: asyncio.Queue = msg["reply_queue"]
-        feedback = await self._generate_feedback()
-        await reply_queue.put(feedback)
+        try:
+            feedback = await self._generate_feedback()
+            await reply_queue.put(feedback)
+        except Exception as e:
+            fallback_feedback = self.session.build_final_feedback()
+            await reply_queue.put(fallback_feedback)
 
     async def _generate_feedback(self) -> Dict[str, Any]:
         turns_text = self._format_turns()
@@ -40,21 +45,25 @@ class Manager(Agent):
             observations=observations_text,
             stats=stats_text,
         )
-        timeout = float(self.config.get("llm_timeout_seconds", 25))
+        timeout = float(self.config.get("llm_timeout_seconds", 20))
         try:
             response = await asyncio.wait_for(
                 self.llm.chat(self.config["system_prompt"], prompt),
                 timeout=timeout,
             )
-        except (asyncio.TimeoutError, Exception) as exc:
-            print(f"Manager LLM error: {exc}. Using fallback.")
+        except asyncio.TimeoutError:
+            return self.session.build_final_feedback()
+        except Exception as exc:
             return self.session.build_final_feedback()
 
         try:
-            parsed = self._parse_json_response(response)
-            return parsed
+            raw_data = self._parse_json_response(response)
+            try:
+                report = FinalReport(**raw_data)
+                return report.model_dump()
+            except Exception as validation_error:
+                return self.session.build_final_feedback()
         except (ValueError, TypeError, json.JSONDecodeError) as exc:
-            print(f"Manager JSON parse error: {exc}. Using fallback.")
             return self.session.build_final_feedback()
 
     def _format_turns(self) -> str:

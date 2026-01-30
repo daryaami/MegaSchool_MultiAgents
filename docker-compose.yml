@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  megaschool:
+    build: .
+    container_name: megaschool-interview-coach
+    ports:
+      - "5000:5000"
+    volumes:
+      # Монтируем логи для сохранения между перезапусками
+      - ./logs:/app/logs
+      # Монтируем сессии Flask
+      - ./flask_session:/app/flask_session
+      # Монтируем конфигурацию
+      - ./config:/app/config:ro
+    env_file:
+      # Загружаем переменные окружения из .env файла
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

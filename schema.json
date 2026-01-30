@@ -2,8 +2,9 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Interview Log",
   "type": "object",
-  "required": ["team_name", "session_id", "meta", "turns", "final_feedback"],
+  "required": ["participant_name", "team_name", "session_id", "meta", "turns", "final_feedback"],
   "properties": {
+    "participant_name": { "type": "string" },
     "team_name": { "type": "string" },
     "session_id": { "type": "string" },
     "meta": {
@@ -22,18 +23,18 @@
         "required": [
           "turn_id",
           "timestamp",
-          "agent_visible_message",
           "user_message",
           "internal_thoughts",
+          "agent_visible_message",
           "interviewer_action",
           "scores"
         ],
         "properties": {
           "turn_id": { "type": "integer" },
           "timestamp": { "type": "string" },
-          "agent_visible_message": { "type": "string" },
           "user_message": { "type": "string" },
           "internal_thoughts": { "type": "string" },
+          "agent_visible_message": { "type": "string" },
           "interviewer_action": { "type": "string" },
           "scores": { "type": "object" }
         }

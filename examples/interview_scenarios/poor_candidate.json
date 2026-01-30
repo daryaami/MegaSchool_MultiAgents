@@ -1,0 +1,67 @@
+{
+  "scenario_name": "poor_candidate",
+  "description": "Плохой кандидат с низкими оценками, галлюцинациями и пробелами",
+  "meta": {
+    "position": "Backend Developer",
+    "grade": "Junior",
+    "experience": "Недавно начал изучать программирование"
+  },
+  "expected_behavior": {
+    "observer_actions": ["decrease", "decrease", "decrease"],
+    "average_correctness": "< 0.5",
+    "average_confidence": "< 0.5",
+    "final_recommendation": "No Hire",
+    "knowledge_gaps": "many gaps",
+    "hallucinations": true
+  },
+  "interview_turns": [
+    {
+      "question": "Расскажите о вашем опыте работы с Python.",
+      "answer": "Я слышал, что Python 4 скоро выйдет и там удалят циклы for. Это будет круто!",
+      "expected_scores": {
+        "correctness": 0.2,
+        "confidence": 0.3
+      },
+      "expected_action": "decrease",
+      "expected_status": "hallucination_suspect",
+      "hallucination_detected": true,
+      "hallucination_reason": "Утверждение о несуществующем Python 4"
+    },
+    {
+      "question": "В чем разница между list и tuple в Python?",
+      "answer": "List и tuple - это одно и то же, просто разные названия. Можно использовать любое.",
+      "expected_scores": {
+        "correctness": 0.25,
+        "confidence": 0.3
+      },
+      "expected_action": "decrease",
+      "expected_status": "gap"
+    },
+    {
+      "question": "Как вы обрабатываете ошибки в коде?",
+      "answer": "Ошибки? Не знаю, что это такое. Я просто пишу код и он работает.",
+      "expected_scores": {
+        "correctness": 0.2,
+        "confidence": 0.25
+      },
+      "expected_action": "decrease",
+      "expected_status": "gap"
+    }
+  ],
+  "expected_final_feedback": {
+    "verdict": {
+      "grade": "Junior",
+      "recommendation": "No Hire",
+      "confidence_score": "< 50"
+    },
+    "technical_review": {
+      "confirmed_skills": [],
+      "knowledge_gaps": ["Python Basics", "Error Handling", "Python Data Structures"]
+    },
+    "soft_skills": {
+      "clarity": "Poor",
+      "honesty": "Unclear",
+      "engagement": "Low"
+    }
+  }
+}

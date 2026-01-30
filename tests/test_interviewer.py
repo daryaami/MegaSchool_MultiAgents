@@ -44,7 +44,6 @@ def test_interviewer_questions_rotate() -> None:
         "max_history_turns": 2,
         "base_questions": ["q1", "q2"],
         "follow_ups": {"same": ["next"], "increase": ["inc"], "decrease": ["dec"]},
-        "topic_map": [],
         "default_topic": "General",
         "observer_timeout_thoughts": "timeout",
     }

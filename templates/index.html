@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MegaSchool Interview Coach</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MegaSchool Interview Coach</h1>
+        </header>
+
+        <!-- Форма начала интервью -->
+        <div id="startForm" class="card">
+            <h2>Начать интервью</h2>
+            <form id="candidateForm">
+                <div class="form-group">
+                    <label for="candidateName">Имя кандидата:</label>
+                    <input type="text" id="candidateName" name="candidateName" required>
+                </div>
+                <div class="form-group">
+                    <label for="position">Позиция:</label>
+                    <input type="text" id="position" name="position" value="Backend Developer" required>
+                </div>
+                <div class="form-group">
+                    <label for="grade">Грейд:</label>
+                    <select id="grade" name="grade" required>
+                        <option value="Junior">Junior</option>
+                        <option value="Middle">Middle</option>
+                        <option value="Senior">Senior</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="experience">Опыт:</label>
+                    <textarea id="experience" name="experience" rows="3" placeholder="Опишите опыт работы..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Начать интервью</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Интерфейс интервью -->
+        <div id="interviewPanel" class="card hidden">
+            <div class="interview-header">
+                <h2>Интервью</h2>
+                <button id="stopBtn" class="btn btn-danger">Завершить</button>
+            </div>
+            
+            <div id="messagesContainer" class="messages-container">
+                <!-- Сообщения будут добавляться сюда -->
+            </div>
+            <div id="thinkingIndicator" class="thinking-indicator hidden">
+                <div class="thinking-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span class="thinking-text">Агент думает...</span>
+            </div>
+
+            <div class="input-area">
+                <div class="input-group">
+                    <input type="text" id="userInput" placeholder="Введите ваш ответ..." autocomplete="off">
+                    <button id="sendBtn" class="btn btn-primary">Отправить</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Панель финального отчёта -->
+        <div id="reportPanel" class="card hidden">
+            <h2>Финальный отчёт</h2>
+            <div id="reportContent"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

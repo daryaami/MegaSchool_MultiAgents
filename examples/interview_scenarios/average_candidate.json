@@ -1,0 +1,65 @@
+{
+  "scenario_name": "average_candidate",
+  "description": "Средний кандидат со смешанными результатами, но честный",
+  "meta": {
+    "position": "Backend Developer",
+    "grade": "Junior",
+    "experience": "1 год изучения Python, несколько пет-проектов"
+  },
+  "expected_behavior": {
+    "observer_actions": ["same", "decrease", "same"],
+    "average_correctness": "0.3 - 0.7",
+    "average_confidence": "0.4 - 0.6",
+    "final_recommendation": "Hire or No Hire",
+    "knowledge_gaps": "some gaps present",
+    "hallucinations": false
+  },
+  "interview_turns": [
+    {
+      "question": "Расскажите о вашем опыте работы с Python.",
+      "answer": "Я изучаю Python около года. Делал несколько пет-проектов, например простой веб-сайт на Flask.",
+      "expected_scores": {
+        "correctness": 0.6,
+        "confidence": 0.55
+      },
+      "expected_action": "same",
+      "expected_status": "confirmed"
+    },
+    {
+      "question": "В чем разница между list и tuple в Python?",
+      "answer": "List можно изменять, tuple - нет. Больше деталей не помню точно.",
+      "expected_scores": {
+        "correctness": 0.5,
+        "confidence": 0.45
+      },
+      "expected_action": "same",
+      "expected_status": "confirmed"
+    },
+    {
+      "question": "Как вы обрабатываете ошибки в коде?",
+      "answer": "Не знаю точно, как правильно обрабатывать ошибки. Обычно просто использую try-except, но не уверен в деталях.",
+      "expected_scores": {
+        "correctness": 0.3,
+        "confidence": 0.4
+      },
+      "expected_action": "decrease",
+      "expected_status": "gap"
+    }
+  ],
+  "expected_final_feedback": {
+    "verdict": {
+      "grade": "Junior",
+      "recommendation": "Hire or No Hire",
+      "confidence_score": "40 - 70"
+    },
+    "technical_review": {
+      "confirmed_skills": ["Python Basics"],
+      "knowledge_gaps": ["Error Handling", "Advanced Python"]
+    },
+    "soft_skills": {
+      "clarity": "Average",
+      "honesty": "Admitted gaps",
+      "engagement": "Neutral"
+    }
+  }
+}
